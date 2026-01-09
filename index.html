@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qureo Auto Solver - المطور</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --error: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-stop {
+            background-color: var(--error);
+            color: white;
+            display: none;
+        }
+
+        .logs {
+            margin-top: 2rem;
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border: 1px solid #334155;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        .log-info { color: var(--text-muted); }
+        .log-warn { color: #f59e0b; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        .hidden { display: none; }
+        
+        .cors-warning {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--error);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🤖 Qureo Solver Web</h1>
+        
+        <div class="cors-warning">
+            ⚠️ <strong>تنبيه هام:</strong> لكي يعمل هذا السكربت من المتصفح، يجب تفعيل إضافة <b>"Allow CORS"</b> أو تشغيل المتصفح بوضع تعطيل حماية الويب، لأن خوادم Qureo ترفض الطلبات الخارجية.
+        </div>
+
+        <div id="loginForm">
+            <div class="input-group">
+                <label>رقم الطالب (Student ID)</label>
+                <input type="text" id="studentId" placeholder="أدخل الرقم هنا">
+            </div>
+            <div class="input-group">
+                <label>كلمة المرور (Password)</label>
+                <input type="password" id="password" placeholder="أدخل كلمة المرور">
+            </div>
+            <button class="btn btn-primary" onclick="startProcess()">🚀 تسجيل الدخول وبدء الحل</button>
+        </div>
+
+        <div id="controlPanel" class="hidden">
+            <div class="status-box">
+                <p>جاري العمل...</p>
+            </div>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopProcess()">🛑 إيقاف</button>
+        </div>
+
+        <div class="logs" id="logsContainer">
+            <div class="log-entry log-info">انتظار المدخلات...</div>
+        </div>
+    </div>
+
+    <script>
+        // ================= Configuration =================
+        const BASE_URL = "https://me-tp.qureo.education";
+        const PORTAL_URL = "https://me-portal.qureo.education";
+        let isRunning = false;
+        
+        // ================= Logger =================
+        function log(msg, type = 'info') {
+            const container = document.getElementById('logsContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            entry.innerText = `[${time}] ${msg}`;
+            container.prepend(entry);
+        }
+
+        // ================= Utilities =================
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+        // دالة لجلب الهيدرز (المتصفح يضيف معظمها تلقائياً، نضيف فقط المهم)
+        function getHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Accept": "*/*"
+                // ملاحظة: المتصفح يمنع تعديل User-Agent و Origin لأسباب أمنية
+            };
+        }
+
+        // ================= Core Logic =================
+
+        async function startProcess() {
+            const studentId = document.getElementById('studentId').value;
+            const password = document.getElementById('password').value;
+
+            if (!studentId || !password) {
+                log("يرجى ملء جميع الحقول", "error");
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('controlPanel').classList.remove('hidden');
+            document.getElementById('stopBtn').style.display = 'block';
+
+            try {
+                const loggedIn = await login(studentId, password);
+                if (loggedIn) {
+                    log("تم تسجيل الدخول بنجاح!", "success");
+                    await runSolverLoop();
+                } else {
+                    log("فشل تسجيل الدخول. تأكد من البيانات أو تفعيل CORS.", "error");
+                    stopProcess();
+                }
+            } catch (e) {
+                log(`حدث خطأ غير متوقع: ${e.message}`, "error");
+                stopProcess();
+            }
+        }
+
+        function stopProcess() {
+            isRunning = false;
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('controlPanel').classList.add('hidden');
+            log("تم إيقاف العملية.", "warn");
+        }
+
+        async function login(studentId, password) {
+            log("جاري محاولة تسجيل الدخول...", "info");
+            try {
+                const response = await fetch(`${PORTAL_URL}/oauth2/password-login`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ student_id: studentId, password: password })
+                });
+
+                if (response.ok) return true;
+                return false;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        async function runSolverLoop() {
+            while (isRunning) {
+                log("🔍 البحث عن الدرس التالي...", "info");
+                
+                // البحث في القسم 5 كافتراضي (كما في كود البايثون)
+                const lectureId = await findActiveLecture(5);
+
+                if (lectureId === "DONE") {
+                    log("🎉 جميع الدروس في هذا القسم مكتملة!", "success");
+                    stopProcess();
+                    break;
+                }
+
+                if (!lectureId) {
+                    log("⚠️ لم يتم العثور على دروس أو حدث خطأ. إعادة المحاولة...", "warn");
+                    await sleep(3000);
+                    continue;
+                }
+
+                log(`📝 بدء حل الدرس: ${lectureId}`, "info");
+                const success = await solveLectureSteps(lectureId);
+                
+                if (success) {
+                    log(`✅ تم إنهاء الدرس ${lectureId} بنجاح!`, "success");
+                    await sleep(2000); // استراحة قصيرة
+                } else {
+                    log(`❌ فشل في حل الدرس ${lectureId}`, "error");
+                    await sleep(5000);
+                }
+            }
+        }
+
+        async function findActiveLecture(sectionId) {
+            try {
+                // 1. جلب الفصول
+                const chapRes = await fetch(`${BASE_URL}/api/study/students/sections/${sectionId}/chapters`);
+                if (!chapRes.ok) return null;
+                const chapters = await chapRes.json();
+
+                for (const chapter of chapters) {
+                    if (chapter.completed_at) continue;
+
+                    // 2. جلب الدروس داخل الفصل
+                    const lecRes = await fetch(`${BASE_URL}/api/study/students/chapters/${chapter.chapter_id}/lectures`);
+                    if (!lecRes.ok) continue;
+                    const lectures = await lecRes.json();
+
+                    for (const lecture of lectures) {
+                        if (lecture.completed_at || lecture.status === 'completed') continue;
+                        return lecture.id || lecture.lecture_id;
+                    }
+                }
+                return "DONE";
+            } catch (e) {
+                console.error(e);
+                return null;
+            }
+        }
+
+        async function solveLectureSteps(lectureId) {
+            try {
+                // 1. جلب الإجابات الصحيحة من بيانات الدرس العامة
+                const sourceRes = await fetch(`${BASE_URL}/api/study/lectures/${lectureId}`);
+                if (!sourceRes.ok) return false;
+                const sourceData = await sourceRes.json();
+
+                const answersMap = {};
+                const steps = sourceData.talks || sourceData.steps || [];
+
+                steps.forEach(step => {
+                    const sId = step.id;
+                    const body = step.body || {};
+                    const type = step.type;
+
+                    if (type === 'programming' && body.codes && body.codes.length > 0) {
+                        if (body.codes[0].model_answer) {
+                            answersMap[sId] = { type: 'code', val: body.codes[0].model_answer };
+                        }
+                    } else if (type === 'choice' && body.options) {
+                        body.options.forEach((opt, idx) => {
+                            if (opt.is_correct) {
+                                answersMap[sId] = { type: 'choice', val: (idx + 1).toString() };
+                            }
+                        });
+                    }
+                });
+
+                // 2. جلب حالة الطالب للدرس
+                const studentRes = await fetch(`${BASE_URL}/api/study/students/lectures/${lectureId}`);
+                if (!studentRes.ok) return false;
+                const studentData = await studentRes.json();
+                const studentTalks = studentData.talks || studentData.steps || [];
+
+                for (const talk of studentTalks) {
+                    if (!isRunning) return false;
+                    
+                    const talkId = talk.talk_id || talk.id;
+                    
+                    if (answersMap[talkId]) {
+                        await submitStep(talkId, answersMap[talkId].val, answersMap[talkId].type);
+                        log(`➡️ حل خطوة (ID: ${talkId}) نوع: ${answersMap[talkId].type}`, "info");
+                    } else {
+                        await submitStep(talkId, null, "pass");
+                    }
+                    
+                    await sleep(800); // تأخير لمحاكاة الإنسان
+                }
+
+                // 3. إنهاء الدرس
+                await fetch(`${BASE_URL}/api/study/students/lectures/${lectureId}/complete`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify({})
+                });
+
+                return true;
+
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        async function submitStep(talkId, answer, type) {
+            const url = `${BASE_URL}/api/study/students/lecture-talks/${talkId}`;
+            let payload = {};
+
+            if (type === "code") {
+                payload = {
+                    "value": {"try_demo": {"lang": "javascript", "answer": answer}},
+                    "status": "completed"
+                };
+            } else if (type === "choice") {
+                payload = {
+                    "value": {"choice_question": {"value": answer}},
+                    "status": "completed"
+                };
+            } else {
+                payload = {
+                    "value": {},
+                    "status": "completed"
+                };
+            }
+
+            try {
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) { }
+        }
+
+    </script>
+</body>
+</html>
