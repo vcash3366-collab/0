@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qureo Auto Solver - المطور</title>
+    <title>Qureo Auto Solver - نظام البروكسي الذكي</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -14,6 +14,8 @@
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
         }
 
         body {
@@ -25,6 +27,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
@@ -33,20 +36,26 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 600px;
-            text-align: center;
+            max-width: 900px;
         }
 
         h1 {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: var(--primary);
             font-size: 1.8rem;
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--warning);
+            margin: 1rem 0;
+            font-size: 1.3rem;
         }
 
         h3 {
-            color: var(--warning);
-            margin: 1rem 0;
-            text-align: right;
+            color: var(--cyan);
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
         }
 
         .input-group {
@@ -61,7 +70,7 @@
             font-size: 0.9rem;
         }
 
-        input, select {
+        input, select, textarea, button {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
@@ -74,20 +83,25 @@
             transition: 0.3s;
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             border-color: var(--primary);
         }
 
         .btn {
-            width: 100%;
-            padding: 12px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
-            margin-top: 1rem;
+            margin: 5px;
+            text-align: center;
+        }
+
+        .btn-block {
+            width: 100%;
+            display: block;
         }
 
         .btn-primary {
@@ -99,54 +113,48 @@
             background-color: #2563eb;
         }
 
-        .btn-secondary {
-            background-color: #4b5563;
+        .btn-success {
+            background-color: var(--success);
             color: white;
         }
 
-        .btn-secondary:hover {
-            background-color: #374151;
+        .btn-success:hover {
+            background-color: #0da271;
         }
 
-        .btn-stop {
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+
+        .btn-danger {
             background-color: var(--error);
             color: white;
-            display: none;
         }
 
-        .btn-stop:hover {
+        .btn-danger:hover {
             background-color: #dc2626;
         }
 
-        .logs {
-            margin-top: 2rem;
-            background-color: #0f172a;
-            border-radius: 8px;
-            padding: 1rem;
-            height: 200px;
-            overflow-y: auto;
-            text-align: right;
-            font-family: monospace;
-            font-size: 0.85rem;
-            border: 1px solid #334155;
+        .btn-purple {
+            background-color: var(--purple);
+            color: white;
         }
 
-        .log-entry {
-            margin-bottom: 5px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #1e293b;
+        .btn-purple:hover {
+            background-color: #7c3aed;
         }
-        .log-success { color: var(--success); }
-        .log-error { color: var(--error); }
-        .log-info { color: var(--text-muted); }
-        .log-warn { color: var(--warning); }
-        .log-proxy { color: #8b5cf6; }
 
         /* Tabs */
         .tabs {
             display: flex;
             margin-bottom: 1.5rem;
             border-bottom: 1px solid #334155;
+            flex-wrap: wrap;
         }
 
         .tab {
@@ -155,6 +163,9 @@
             color: var(--text-muted);
             border-bottom: 2px solid transparent;
             transition: 0.3s;
+            flex: 1;
+            text-align: center;
+            min-width: 120px;
         }
 
         .tab.active {
@@ -164,162 +175,986 @@
 
         .tab-content {
             display: none;
-            text-align: right;
         }
 
         .tab-content.active {
             display: block;
         }
 
-        .proxy-status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 8px;
-            background-color: rgba(59, 130, 246, 0.1);
-            border: 1px solid var(--primary);
+        /* Proxy Stats */
+        .proxy-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
         }
 
-        .proxy-status.error {
-            background-color: rgba(239, 68, 68, 0.1);
-            border-color: var(--error);
+        .stat-box {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #334155;
         }
 
-        .proxy-status.success {
-            background-color: rgba(16, 185, 129, 0.1);
-            border-color: var(--success);
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
-        .proxy-list {
-            max-height: 150px;
+        .stat-good { color: var(--success); }
+        .stat-bad { color: var(--error); }
+        .stat-warn { color: var(--warning); }
+        .stat-info { color: var(--primary); }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Proxy List */
+        .proxy-list-container {
+            max-height: 300px;
             overflow-y: auto;
-            margin: 10px 0;
+            margin: 15px 0;
             padding: 10px;
-            background-color: #0f172a;
+            background: #0f172a;
             border-radius: 8px;
+            border: 1px solid #334155;
         }
 
         .proxy-item {
-            padding: 5px;
-            margin: 3px 0;
-            background-color: #1e293b;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.3s;
+            padding: 8px;
+            margin: 4px 0;
+            background: #1e293b;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
 
         .proxy-item:hover {
-            background-color: #334155;
+            background: #334155;
         }
 
-        .proxy-item.active {
-            background-color: var(--primary);
+        .proxy-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
         }
+
+        .status-good { background: var(--success); }
+        .status-bad { background: var(--error); }
+        .status-checking { background: var(--warning); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .control-card {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        /* Logs */
+        .logs-container {
+            margin-top: 20px;
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #1e293b;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        .log-warning { color: var(--warning); }
+        .log-info { color: var(--text-muted); }
+        .log-proxy { color: var(--purple); }
+        .log-debug { color: var(--cyan); }
+
+        /* Connection Status */
+        .connection-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .status-connected { 
+            background: rgba(16, 185, 129, 0.2); 
+            color: var(--success); 
+            border: 1px solid var(--success); 
+        }
+        .status-disconnected { 
+            background: rgba(239, 68, 68, 0.2); 
+            color: var(--error); 
+            border: 1px solid var(--error); 
+        }
+        .status-checking { 
+            background: rgba(245, 158, 11, 0.2); 
+            color: var(--warning); 
+            border: 1px solid var(--warning); 
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none; }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        .hidden { display: none; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .proxy-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+            .tab {
+                min-width: 100px;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🤖 Qureo Solver Web</h1>
+        <h1>🛡️ Qureo Solver - نظام البروكسي الذكي</h1>
         
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">تسجيل الدخول</div>
-            <div class="tab" onclick="switchTab('proxy')">إعدادات البروكسي</div>
-            <div class="tab" onclick="switchTab('info')">المعلومات</div>
+            <div class="tab active" onclick="switchTab('proxy')">🧪 نظام البروكسي</div>
+            <div class="tab" onclick="switchTab('solver')">🤖 حل الدروس</div>
+            <div class="tab" onclick="switchTab('settings')">⚙️ الإعدادات</div>
         </div>
 
-        <div id="loginTab" class="tab-content active">
-            <div class="input-group">
-                <label>رقم الطالب (Student ID)</label>
-                <input type="text" id="studentId" placeholder="أدخل الرقم هنا">
+        <!-- Proxy Tab -->
+        <div id="proxyTab" class="tab-content active">
+            <div class="connection-status" id="connectionStatus">
+                <span>🔴 غير متصل</span>
             </div>
-            <div class="input-group">
-                <label>كلمة المرور (Password)</label>
-                <input type="password" id="password" placeholder="أدخل كلمة المرور">
+
+            <div class="proxy-stats">
+                <div class="stat-box">
+                    <div class="stat-value stat-info" id="totalProxies">0</div>
+                    <div class="stat-label">البروكسيات المجمعة</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value stat-good" id="workingProxies">0</div>
+                    <div class="stat-label">البروكسيات النشطة</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value stat-bad" id="deadProxies">0</div>
+                    <div class="stat-label">البروكسيات الفاشلة</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value stat-warn" id="currentSpeed">0ms</div>
+                    <div class="stat-label">سرعة الاستجابة</div>
+                </div>
             </div>
-            <div class="input-group">
-                <label>طريقة الاتصال</label>
-                <select id="connectionMethod">
-                    <option value="direct">اتصال مباشر (مع إضافة CORS)</option>
-                    <option value="proxy">استخدام بروكسي تلقائي</option>
-                </select>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="proxyProgress" style="width: 0%"></div>
             </div>
-            <button class="btn btn-primary" onclick="startProcess()">🚀 تسجيل الدخول وبدء الحل</button>
+
+            <div class="control-panel">
+                <div class="control-card">
+                    <h3>🔄 جمع البروكسيات</h3>
+                    <p>جمع بروكسيات من مصادر متعددة</p>
+                    <button class="btn btn-primary btn-block" onclick="fetchProxies()" id="fetchBtn">
+                        بدء الجمع
+                    </button>
+                </div>
+                
+                <div class="control-card">
+                    <h3>✅ فحص البروكسيات</h3>
+                    <p>فحص وتصفية البروكسيات النشطة</p>
+                    <button class="btn btn-success btn-block" onclick="checkProxies()" id="checkBtn">
+                        بدء الفحص
+                    </button>
+                </div>
+                
+                <div class="control-card">
+                    <h3>⚡ اختبار الاتصال</h3>
+                    <p>اختبار البروكسي الأسرع</p>
+                    <button class="btn btn-warning btn-block" onclick="testFastestProxy()" id="testBtn">
+                        اختبار السرعة
+                    </button>
+                </div>
+                
+                <div class="control-card">
+                    <h3>🚀 بدء التشغيل</h3>
+                    <p>بدء حل الدروس باستخدام أفضل بروكسي</p>
+                    <button class="btn btn-purple btn-block" onclick="startSolving()" id="startBtn">
+                        بدء الحل
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3>📋 قائمة البروكسيات النشطة</h3>
+                    <div>
+                        <button class="btn btn-danger" onclick="clearProxies()" style="padding: 5px 10px; font-size: 0.8rem;">
+                            🗑️ مسح القائمة
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="proxy-list-container" id="proxyList">
+                    <div class="proxy-item">
+                        <span>جاري التحميل...</span>
+                        <span class="proxy-status status-checking"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logs-container" id="proxyLogs">
+                <div class="log-entry log-info">
+                    <span class="log-time">[00:00:00]</span>
+                    🚀 نظام البروكسي الذكي جاهز للعمل
+                </div>
+            </div>
         </div>
 
-        <div id="proxyTab" class="tab-content">
-            <h3>📡 نظام البروكسي التلقائي</h3>
-            <div class="input-group">
-                <label>قائمة بروكسيات احتياطية (اختياري)</label>
-                <textarea id="customProxies" placeholder="https://corsproxy.io/?https://me-portal.qureo.education
-https://api.allorigins.win/raw?url=https://me-portal.qureo.education" rows="4"></textarea>
+        <!-- Solver Tab -->
+        <div id="solverTab" class="tab-content">
+            <div id="loginSection">
+                <h2>🔐 تسجيل الدخول</h2>
+                <div class="input-group">
+                    <label>رقم الطالب (Student ID)</label>
+                    <input type="text" id="studentId" placeholder="أدخل الرقم هنا">
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور (Password)</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور">
+                </div>
+                <div class="input-group">
+                    <label>القسم (Section ID)</label>
+                    <input type="number" id="sectionId" value="5" min="1" max="10">
+                </div>
+                <button class="btn btn-success btn-block" onclick="loginToQureo()">تسجيل الدخول</button>
             </div>
+
+            <div id="solverSection" class="hidden">
+                <h2>📚 حل الدروس</h2>
+                <div style="margin: 20px 0;">
+                    <button class="btn btn-primary" onclick="getLessons()">🔄 جلب الدروس</button>
+                    <button class="btn btn-success" onclick="solveAll()">⚡ حل جميع الدروس</button>
+                    <button class="btn btn-warning" onclick="solveSelected()">🎯 حل محدد</button>
+                </div>
+
+                <div class="proxy-list-container" id="lessonsList">
+                    <div class="proxy-item">
+                        <span>قم بتسجيل الدخول أولاً</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3>📊 تقدم الحل</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="solvingProgress" style="width: 0%"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <span id="progressText">0/0 دروس</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content">
+            <h2>⚙️ إعدادات النظام</h2>
             
-            <div id="proxyStatus" class="proxy-status">
-                ⏳ اختبار البروكسي المتوفر...
+            <div class="input-group">
+                <label>عدد ثواني المهلة (Timeout)</label>
+                <input type="number" id="timeout" value="10" min="1" max="30">
             </div>
-            
-            <button class="btn btn-secondary" onclick="testProxies()">🔄 اختبار البروكسيات</button>
-            <button class="btn btn-primary" onclick="findWorkingProxy()">🔍 البحث عن بروكسي تلقائي</button>
-        </div>
 
-        <div id="infoTab" class="tab-content">
-            <h3>ℹ️ معلومات حول النظام</h3>
-            <div style="text-align: right; line-height: 1.6;">
-                <p>✅ هذا النظام يستخدم بروكسيات CORS للاتصال المباشر</p>
-                <p>🔒 جميع البيانات تُعالج محلياً في متصفحك</p>
-                <p>⚡ البروكسيات المضمنة:</p>
-                <ul style="text-align: right; padding-right: 1rem;">
-                    <li>corsproxy.io</li>
-                    <li>api.allorigins.win</li>
-                    <li>cors-anywhere.herokuapp.com</li>
-                    <li>proxy.cors.sh</li>
-                </ul>
-                <p class="log-warn">⚠️ قد يختلف سرعة العمل حسب البروكسي المستخدم</p>
+            <div class="input-group">
+                <label>عدد العمال المتزامنين (Workers)</label>
+                <input type="number" id="workers" value="50" min="1" max="200">
             </div>
-        </div>
 
-        <div id="controlPanel" class="hidden">
-            <div class="status-box">
-                <p id="statusText">جاري العمل...</p>
-                <p id="currentProxyInfo" class="log-proxy"></p>
+            <div class="input-group">
+                <label>مصادر البروكسيات (URLs مفصولة بفواصل)</label>
+                <textarea id="proxySources" rows="6">https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all
+https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
+https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt
+https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-http.txt
+https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt
+https://raw.githubusercontent.com/mmpx12/proxy-list/master/http.txt
+https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt</textarea>
             </div>
-            <button class="btn btn-stop" id="stopBtn" onclick="stopProcess()">🛑 إيقاف</button>
-        </div>
 
-        <div class="logs" id="logsContainer">
-            <div class="log-entry log-info">انتظار المدخلات...</div>
+            <div class="input-group">
+                <label><input type="checkbox" id="autoFetch" checked> جمع بروكسيات تلقائي عند البدء</label>
+            </div>
+
+            <div class="input-group">
+                <label><input type="checkbox" id="autoCheck" checked> فحص بروكسيات تلقائي بعد الجمع</label>
+            </div>
+
+            <div class="input-group">
+                <label><input type="checkbox" id="autoRotate" checked> تبديل البروكسي تلقائياً عند الفشل</label>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+                <button class="btn btn-warning" onclick="resetSettings()">🔄 إعادة تعيين</button>
+            </div>
         </div>
     </div>
 
     <script>
         // ================= Configuration =================
-        const BASE_URL = "https://me-tp.qureo.education";
-        const PORTAL_URL = "https://me-portal.qureo.education";
-        let isRunning = false;
-        let currentProxy = null;
+        const QUREO_BASE = "https://me-tp.qureo.education";
+        const QUREO_PORTAL = "https://me-portal.qureo.education";
         
-        // ================= Proxy System =================
-        const BUILTIN_PROXIES = [
-            "https://corsproxy.io/?",
-            "https://api.allorigins.win/raw?url=",
-            "https://cors-anywhere.herokuapp.com/",
-            "https://proxy.cors.sh/",
-            "https://api.codetabs.com/v1/proxy?quest=",
-            "https://cors-proxy.htmldriven.com/?url=",
-            "https://crossorigin.me/",
-            "https://thingproxy.freeboard.io/fetch/"
-        ];
+        // Global state
+        let proxyManager = {
+            allProxies: [],
+            workingProxies: [],
+            deadProxies: [],
+            currentProxy: null,
+            isRunning: false,
+            isLoggedIn: false,
+            stats: {
+                totalFetched: 0,
+                working: 0,
+                dead: 0,
+                speed: 0
+            }
+        };
+
+        // ================= Initialization =================
+        function init() {
+            loadSettings();
+            updateStats();
+            loadWorkingProxies();
+            log("🚀 نظام البروكسي الذكي جاهز للعمل", "info");
+            
+            // Auto-fetch if enabled
+            if (getSetting('autoFetch', true)) {
+                setTimeout(() => {
+                    fetchProxies();
+                }, 1000);
+            }
+        }
+
+        // ================= Proxy Fetching =================
+        async function fetchProxies() {
+            if (proxyManager.isRunning) return;
+            
+            proxyManager.isRunning = true;
+            const fetchBtn = document.getElementById('fetchBtn');
+            fetchBtn.innerHTML = '<span class="loading"></span> جاري الجمع...';
+            fetchBtn.disabled = true;
+            
+            log("🔄 بدء جمع البروكسيات من المصادر...", "proxy");
+            
+            const sources = document.getElementById('proxySources').value.split('\n').filter(s => s.trim());
+            proxyManager.allProxies = [];
+            
+            try {
+                for (const source of sources) {
+                    if (!proxyManager.isRunning) break;
+                    
+                    log(`📥 جاري جلب من: ${source.split('/')[2] || source}`, "debug");
+                    
+                    try {
+                        const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(source)}`, {
+                            timeout: getSetting('timeout', 10) * 1000
+                        }).catch(() => null);
+                        
+                        if (response && response.ok) {
+                            const text = await response.text();
+                            const proxies = text.split('\n')
+                                .map(p => p.trim())
+                                .filter(p => p && !p.includes(':') && p.length > 6);
+                            
+                            proxyManager.allProxies.push(...proxies);
+                            log(`✅ تم جلب ${proxies.length} بروكسي من المصدر`, "success");
+                        }
+                    } catch (e) {
+                        log(`❌ فشل جلب من: ${source}`, "error");
+                    }
+                }
+                
+                // Remove duplicates
+                proxyManager.allProxies = [...new Set(proxyManager.allProxies)];
+                proxyManager.stats.totalFetched = proxyManager.allProxies.length;
+                
+                log(`🎉 تم جمع ${proxyManager.allProxies.length} بروكسي فريد`, "success");
+                updateStats();
+                
+                // Auto-check if enabled
+                if (getSetting('autoCheck', true) && proxyManager.allProxies.length > 0) {
+                    setTimeout(() => {
+                        checkProxies();
+                    }, 1000);
+                }
+                
+            } catch (e) {
+                log(`❌ خطأ في جمع البروكسيات: ${e.message}`, "error");
+            } finally {
+                proxyManager.isRunning = false;
+                fetchBtn.innerHTML = 'بدء الجمع';
+                fetchBtn.disabled = false;
+            }
+        }
+
+        // ================= Proxy Checking =================
+        async function checkProxies() {
+            if (proxyManager.isRunning || proxyManager.allProxies.length === 0) {
+                if (proxyManager.allProxies.length === 0) {
+                    log("⚠️ لا توجد بروكسيات للفحص. قم بالجمع أولاً", "warning");
+                }
+                return;
+            }
+            
+            proxyManager.isRunning = true;
+            const checkBtn = document.getElementById('checkBtn');
+            checkBtn.innerHTML = '<span class="loading"></span> جاري الفحص...';
+            checkBtn.disabled = true;
+            
+            proxyManager.workingProxies = [];
+            proxyManager.deadProxies = [];
+            
+            const total = proxyManager.allProxies.length;
+            const workers = getSetting('workers', 50);
+            const batchSize = Math.ceil(total / workers);
+            
+            log(`🔍 بدء فحص ${total} بروكسي بـ ${workers} عامل متزامن...`, "proxy");
+            
+            // Clear proxy list display
+            const proxyListEl = document.getElementById('proxyList');
+            proxyListEl.innerHTML = '';
+            
+            // Create batches
+            const batches = [];
+            for (let i = 0; i < total; i += batchSize) {
+                batches.push(proxyManager.allProxies.slice(i, i + batchSize));
+            }
+            
+            // Process batches
+            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                if (!proxyManager.isRunning) break;
+                
+                const batch = batches[batchIndex];
+                const promises = batch.map(proxy => checkSingleProxy(proxy));
+                
+                await Promise.all(promises);
+                
+                // Update progress
+                const progress = ((batchIndex + 1) / batches.length) * 100;
+                document.getElementById('proxyProgress').style.width = `${progress}%`;
+                
+                updateStats();
+                updateProxyList();
+            }
+            
+            // Save working proxies
+            saveWorkingProxies();
+            
+            log(`✅ تم الانتهاء من الفحص: ${proxyManager.workingProxies.length} ناجح، ${proxyManager.deadProxies.length} فاشل`, "success");
+            
+            proxyManager.isRunning = false;
+            checkBtn.innerHTML = 'بدء الفحص';
+            checkBtn.disabled = false;
+            document.getElementById('proxyProgress').style.width = '100%';
+            
+            // Test fastest proxy
+            if (proxyManager.workingProxies.length > 0) {
+                setTimeout(() => {
+                    testFastestProxy();
+                }, 500);
+            }
+        }
         
-        // ================= Tab System =================
+        async function checkSingleProxy(proxy) {
+            const testUrl = `https://corsproxy.io/?${encodeURIComponent(QUREO_PORTAL)}`;
+            
+            try {
+                // Create controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), getSetting('timeout', 10) * 1000);
+                
+                const startTime = Date.now();
+                const response = await fetch(testUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'X-Proxy': proxy
+                    }
+                }).catch(() => null);
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const speed = Date.now() - startTime;
+                    proxyManager.workingProxies.push({ proxy, speed });
+                    proxyManager.stats.working++;
+                    
+                    // Update fastest proxy
+                    if (!proxyManager.currentProxy || speed < proxyManager.currentProxy.speed) {
+                        proxyManager.currentProxy = { proxy, speed };
+                        proxyManager.stats.speed = speed;
+                    }
+                    
+                    return true;
+                } else {
+                    proxyManager.deadProxies.push(proxy);
+                    proxyManager.stats.dead++;
+                    return false;
+                }
+            } catch (e) {
+                proxyManager.deadProxies.push(proxy);
+                proxyManager.stats.dead++;
+                return false;
+            }
+        }
+
+        // ================= Fastest Proxy Test =================
+        async function testFastestProxy() {
+            if (proxyManager.workingProxies.length === 0) {
+                log("⚠️ لا توجد بروكسيات نشطة للاختبار", "warning");
+                return;
+            }
+            
+            const testBtn = document.getElementById('testBtn');
+            testBtn.innerHTML = '<span class="loading"></span> جاري الاختبار...';
+            testBtn.disabled = true;
+            
+            log("⚡ اختبار سرعة البروكسيات النشطة...", "proxy");
+            
+            // Sort by speed and take top 5
+            const fastestProxies = [...proxyManager.workingProxies]
+                .sort((a, b) => a.speed - b.speed)
+                .slice(0, 5);
+            
+            // Test each proxy
+            for (const proxyData of fastestProxies) {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(QUREO_PORTAL)}`, {
+                        timeout: 5000,
+                        headers: {
+                            'X-Proxy': proxyData.proxy
+                        }
+                    }).catch(() => null);
+                    
+                    if (response && response.ok) {
+                        const speed = Date.now() - startTime;
+                        proxyData.speed = speed;
+                        
+                        if (!proxyManager.currentProxy || speed < proxyManager.currentProxy.speed) {
+                            proxyManager.currentProxy = proxyData;
+                            proxyManager.stats.speed = speed;
+                            
+                            log(`🏆 أفضل بروكسي: ${proxyData.proxy} - ${speed}ms`, "success");
+                            updateConnectionStatus(true);
+                        }
+                    }
+                } catch (e) {
+                    // Skip this proxy
+                }
+            }
+            
+            updateStats();
+            testBtn.innerHTML = 'اختبار السرعة';
+            testBtn.disabled = false;
+        }
+
+        // ================= Smart Fetch System =================
+        async function smartFetch(url, options = {}) {
+            if (!proxyManager.currentProxy) {
+                log("⚠️ لا يوجد بروكسي نشط. جاري البحث...", "warning");
+                await testFastestProxy();
+                
+                if (!proxyManager.currentProxy) {
+                    throw new Error('لا توجد بروكسيات نشطة');
+                }
+            }
+            
+            const proxy = proxyManager.currentProxy.proxy;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), getSetting('timeout', 10) * 1000);
+                
+                const response = await fetch(proxyUrl, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        ...options.headers,
+                        'X-Proxy': proxy
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return response;
+                } else if (response.status === 403 || response.status === 429) {
+                    // Proxy blocked, try another one
+                    log(`🔄 البروكسي ${proxy} محظور. جاري التبديل...`, "warning");
+                    
+                    // Remove current proxy
+                    proxyManager.workingProxies = proxyManager.workingProxies.filter(p => p.proxy !== proxy);
+                    proxyManager.currentProxy = null;
+                    
+                    // Try next fastest proxy
+                    if (proxyManager.workingProxies.length > 0) {
+                        proxyManager.workingProxies.sort((a, b) => a.speed - b.speed);
+                        proxyManager.currentProxy = proxyManager.workingProxies[0];
+                        return await smartFetch(url, options);
+                    } else {
+                        throw new Error('لا توجد بروكسيات متاحة');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (e) {
+                if (getSetting('autoRotate', true)) {
+                    // Try another proxy
+                    log(`🔄 خطأ في البروكسي ${proxy}. جاري التبديل...`, "warning");
+                    
+                    if (proxyManager.workingProxies.length > 1) {
+                        proxyManager.workingProxies = proxyManager.workingProxies.filter(p => p.proxy !== proxy);
+                        proxyManager.workingProxies.sort((a, b) => a.speed - b.speed);
+                        proxyManager.currentProxy = proxyManager.workingProxies[0];
+                        return await smartFetch(url, options);
+                    }
+                }
+                
+                throw e;
+            }
+        }
+
+        // ================= Qureo Solver =================
+        async function loginToQureo() {
+            const studentId = document.getElementById('studentId').value;
+            const password = document.getElementById('password').value;
+            const sectionId = document.getElementById('sectionId').value;
+            
+            if (!studentId || !password) {
+                log("يرجى ملء جميع الحقول", "error");
+                return;
+            }
+            
+            log("🔐 جاري تسجيل الدخول إلى Qureo...", "info");
+            
+            try {
+                const response = await smartFetch(`${QUREO_PORTAL}/oauth2/password-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': '*/*'
+                    },
+                    body: JSON.stringify({ 
+                        student_id: studentId, 
+                        password: password 
+                    })
+                });
+                
+                if (response.ok) {
+                    proxyManager.isLoggedIn = true;
+                    
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('solverSection').classList.remove('hidden');
+                    
+                    log("✅ تم تسجيل الدخول بنجاح!", "success");
+                    await getLessons();
+                } else {
+                    log("❌ فشل تسجيل الدخول. تأكد من البيانات", "error");
+                }
+            } catch (e) {
+                log(`❌ خطأ في تسجيل الدخول: ${e.message}`, "error");
+            }
+        }
+        
+        async function getLessons() {
+            if (!proxyManager.isLoggedIn) return;
+            
+            log("📚 جاري جلب الدروس...", "info");
+            
+            try {
+                const sectionId = document.getElementById('sectionId').value;
+                const response = await smartFetch(`${QUREO_BASE}/api/study/students/sections/${sectionId}/chapters`);
+                
+                if (response.ok) {
+                    const chapters = await response.json();
+                    displayLessons(chapters);
+                }
+            } catch (e) {
+                log(`❌ خطأ في جلب الدروس: ${e.message}`, "error");
+            }
+        }
+        
+        function displayLessons(chapters) {
+            const container = document.getElementById('lessonsList');
+            container.innerHTML = '';
+            
+            chapters.forEach(chapter => {
+                const chapterEl = document.createElement('div');
+                chapterEl.className = 'proxy-item';
+                chapterEl.innerHTML = `
+                    <div style="flex: 1;">
+                        <strong>${chapter.title || `الفصل ${chapter.chapter_number}`}</strong>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">
+                            ${chapter.completed_at ? '✅ مكتمل' : '⏳ غير مكتمل'}
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="padding: 3px 8px; font-size: 0.8rem;"
+                            onclick="solveChapter('${chapter.chapter_id}')">
+                        حل
+                    </button>
+                `;
+                container.appendChild(chapterEl);
+            });
+        }
+        
+        async function solveAll() {
+            log("⚡ بدء حل جميع الدروس...", "info");
+            // Implementation for solving all lessons
+        }
+        
+        async function solveSelected() {
+            // Implementation for solving selected lessons
+        }
+        
+        async function solveChapter(chapterId) {
+            log(`🔍 بدء حل الفصل ${chapterId}...`, "info");
+            // Implementation for solving a chapter
+        }
+
+        // ================= UI Updates =================
+        function updateStats() {
+            document.getElementById('totalProxies').textContent = proxyManager.allProxies.length;
+            document.getElementById('workingProxies').textContent = proxyManager.workingProxies.length;
+            document.getElementById('deadProxies').textContent = proxyManager.deadProxies.length;
+            document.getElementById('currentSpeed').textContent = proxyManager.currentProxy ? 
+                `${proxyManager.currentProxy.speed}ms` : '0ms';
+        }
+        
+        function updateProxyList() {
+            const container = document.getElementById('proxyList');
+            const topProxies = proxyManager.workingProxies
+                .sort((a, b) => a.speed - b.speed)
+                .slice(0, 20);
+            
+            container.innerHTML = '';
+            
+            if (topProxies.length === 0) {
+                container.innerHTML = '<div class="proxy-item">لا توجد بروكسيات نشطة</div>';
+                return;
+            }
+            
+            topProxies.forEach(proxyData => {
+                const item = document.createElement('div');
+                item.className = 'proxy-item';
+                item.innerHTML = `
+                    <span>${proxyData.proxy}</span>
+                    <div>
+                        <span style="color: ${proxyData.speed < 1000 ? '#10b981' : '#f59e0b'}; margin-right: 10px;">
+                            ${proxyData.speed}ms
+                        </span>
+                        <span class="proxy-status ${proxyData.proxy === (proxyManager.currentProxy?.proxy) ? 'status-good' : 'status-checking'}"></span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function updateConnectionStatus(connected = false) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected && proxyManager.currentProxy) {
+                statusEl.innerHTML = `🟢 متصل - ${proxyManager.currentProxy.proxy.split(':')[0]}`;
+                statusEl.className = 'connection-status status-connected';
+            } else {
+                statusEl.innerHTML = '🔴 غير متصل';
+                statusEl.className = 'connection-status status-disconnected';
+            }
+        }
+        
+        function log(message, type = 'info') {
+            const container = document.getElementById('proxyLogs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            
+            container.prepend(entry);
+            
+            // Keep logs manageable
+            if (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+            
+            // Also log to console
+            console.log(`[${type}] ${message}`);
+        }
+
+        // ================= Settings Management =================
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('proxySettings') || '{}');
+            
+            document.getElementById('timeout').value = settings.timeout || 10;
+            document.getElementById('workers').value = settings.workers || 50;
+            document.getElementById('proxySources').value = settings.proxySources || document.getElementById('proxySources').value;
+            document.getElementById('autoFetch').checked = settings.autoFetch !== false;
+            document.getElementById('autoCheck').checked = settings.autoCheck !== false;
+            document.getElementById('autoRotate').checked = settings.autoRotate !== false;
+        }
+        
+        function saveSettings() {
+            const settings = {
+                timeout: parseInt(document.getElementById('timeout').value),
+                workers: parseInt(document.getElementById('workers').value),
+                proxySources: document.getElementById('proxySources').value,
+                autoFetch: document.getElementById('autoFetch').checked,
+                autoCheck: document.getElementById('autoCheck').checked,
+                autoRotate: document.getElementById('autoRotate').checked
+            };
+            
+            localStorage.setItem('proxySettings', JSON.stringify(settings));
+            log("✅ تم حفظ الإعدادات", "success");
+        }
+        
+        function resetSettings() {
+            localStorage.removeItem('proxySettings');
+            loadSettings();
+            log("🔄 تم إعادة تعيين الإعدادات", "info");
+        }
+        
+        function getSetting(key, defaultValue) {
+            const settings = JSON.parse(localStorage.getItem('proxySettings') || '{}');
+            return settings[key] !== undefined ? settings[key] : defaultValue;
+        }
+
+        // ================= Utility Functions =================
+        function clearProxies() {
+            proxyManager.workingProxies = [];
+            proxyManager.deadProxies = [];
+            proxyManager.currentProxy = null;
+            updateStats();
+            updateProxyList();
+            log("🗑️ تم مسح قائمة البروكسيات", "info");
+        }
+        
+        function saveWorkingProxies() {
+            const proxies = proxyManager.workingProxies.map(p => `${p.proxy}|${p.speed}`);
+            localStorage.setItem('workingProxies', JSON.stringify(proxies));
+        }
+        
+        function loadWorkingProxies() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('workingProxies') || '[]');
+                proxyManager.workingProxies = saved.map(item => {
+                    const [proxy, speed] = item.split('|');
+                    return { proxy, speed: parseInt(speed) };
+                });
+                
+                if (proxyManager.workingProxies.length > 0) {
+                    proxyManager.workingProxies.sort((a, b) => a.speed - b.speed);
+                    proxyManager.currentProxy = proxyManager.workingProxies[0];
+                    proxyManager.stats.speed = proxyManager.currentProxy.speed;
+                    updateConnectionStatus(true);
+                }
+                
+                updateStats();
+                updateProxyList();
+            } catch (e) {
+                console.error('Error loading proxies:', e);
+            }
+        }
+        
+        function startSolving() {
+            if (!proxyManager.currentProxy) {
+                log("⚠️ لا يوجد بروكسي نشط. قم بجمع وفحص البروكسيات أولاً", "warning");
+                return;
+            }
+            
+            switchTab('solver');
+            log("🚀 الانتقال إلى لوحة حل الدروس...", "success");
+        }
+
+        // ================= Tab Management =================
         function switchTab(tabName) {
-            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
@@ -327,423 +1162,13 @@ https://api.allorigins.win/raw?url=https://me-portal.qureo.education" rows="4"><
                 tab.classList.remove('active');
             });
             
-            // Show selected tab
             document.getElementById(tabName + 'Tab').classList.add('active');
             event.target.classList.add('active');
         }
-        
-        // ================= Logger =================
-        function log(msg, type = 'info') {
-            const container = document.getElementById('logsContainer');
-            const entry = document.createElement('div');
-            entry.className = `log-entry log-${type}`;
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
-            entry.innerText = `[${time}] ${msg}`;
-            container.prepend(entry);
-        }
-        
-        // ================= Proxy Management =================
-        async function findWorkingProxy() {
-            const proxyStatus = document.getElementById('proxyStatus');
-            proxyStatus.className = 'proxy-status';
-            proxyStatus.innerHTML = '🔍 جاري البحث عن بروكسي فعال...';
-            
-            // Get all proxies (built-in + custom)
-            let allProxies = [...BUILTIN_PROXIES];
-            const customText = document.getElementById('customProxies').value;
-            if (customText) {
-                const customProxies = customText.split('\n').map(p => p.trim()).filter(p => p);
-                allProxies = [...customProxies, ...allProxies];
-            }
-            
-            log(`🔍 جاري اختبار ${allProxies.length} بروكسي...`, 'proxy');
-            
-            for (const proxy of allProxies) {
-                if (!isRunning) break;
-                
-                const testUrl = proxy + encodeURIComponent(PORTAL_URL);
-                try {
-                    const test = await fetch(testUrl, {
-                        method: 'HEAD',
-                        timeout: 5000
-                    }).catch(() => null);
-                    
-                    if (test && test.ok) {
-                        currentProxy = proxy;
-                        proxyStatus.className = 'proxy-status success';
-                        proxyStatus.innerHTML = `✅ تم العثور على بروكسي فعال: ${proxy.split('/')[2]}`;
-                        log(`✅ بروكسي فعال: ${proxy}`, 'success');
-                        
-                        // Update status display
-                        const proxyInfo = proxy.split('/')[2];
-                        document.getElementById('currentProxyInfo').textContent = `🔗 البروكسي المستخدم: ${proxyInfo}`;
-                        
-                        return proxy;
-                    }
-                } catch (e) {
-                    // Continue to next proxy
-                }
-            }
-            
-            proxyStatus.className = 'proxy-status error';
-            proxyStatus.innerHTML = '❌ لم يتم العثور على بروكسي فعال. حاول إضافة بروكسيات يدوياً.';
-            log('❌ فشل العثور على بروكسي فعال', 'error');
-            return null;
-        }
-        
-        async function testProxies() {
-            const proxyStatus = document.getElementById('proxyStatus');
-            proxyStatus.className = 'proxy-status';
-            proxyStatus.innerHTML = '⚡ جاري اختبار البروكسيات...';
-            
-            const proxyList = document.createElement('div');
-            proxyList.className = 'proxy-list';
-            
-            const allProxies = [...BUILTIN_PROXIES];
-            const customText = document.getElementById('customProxies').value;
-            if (customText) {
-                const customProxies = customText.split('\n').map(p => p.trim()).filter(p => p);
-                allProxies.unshift(...customProxies);
-            }
-            
-            for (const proxy of allProxies) {
-                const proxyItem = document.createElement('div');
-                proxyItem.className = 'proxy-item';
-                proxyItem.textContent = `⏳ اختبار: ${proxy.split('/')[2] || proxy}`;
-                proxyList.appendChild(proxyItem);
-                
-                try {
-                    const test = await fetch(proxy + encodeURIComponent(PORTAL_URL), {
-                        method: 'HEAD'
-                    }).catch(() => null);
-                    
-                    if (test && test.ok) {
-                        proxyItem.innerHTML = `✅ ${proxy.split('/')[2] || proxy}`;
-                        proxyItem.style.color = '#10b981';
-                    } else {
-                        proxyItem.innerHTML = `❌ ${proxy.split('/')[2] || proxy}`;
-                        proxyItem.style.color = '#ef4444';
-                    }
-                } catch (e) {
-                    proxyItem.innerHTML = `❌ ${proxy.split('/')[2] || proxy}`;
-                    proxyItem.style.color = '#ef4444';
-                }
-            }
-            
-            proxyStatus.innerHTML = '';
-            proxyStatus.appendChild(document.createTextNode('نتيجة اختبار البروكسيات:'));
-            proxyStatus.appendChild(proxyList);
-        }
-        
-        // ================= Enhanced Fetch with Proxy =================
-        async function smartFetch(url, options = {}) {
-            const connectionMethod = document.getElementById('connectionMethod').value;
-            
-            // Direct connection (requires CORS extension)
-            if (connectionMethod === 'direct' || currentProxy === null) {
-                try {
-                    const response = await fetch(url, options);
-                    return response;
-                } catch (error) {
-                    log(`❌ فشل الاتصال المباشر: ${error.message}`, 'error');
-                    
-                    // Try to find proxy automatically
-                    if (!currentProxy) {
-                        await findWorkingProxy();
-                    }
-                    
-                    if (currentProxy) {
-                        return await proxyFetch(url, options);
-                    }
-                    
-                    throw error;
-                }
-            }
-            
-            // Use proxy
-            return await proxyFetch(url, options);
-        }
-        
-        async function proxyFetch(url, options = {}) {
-            if (!currentProxy) {
-                const found = await findWorkingProxy();
-                if (!found) {
-                    throw new Error('لا يوجد بروكسي فعال');
-                }
-            }
-            
-            const proxyUrl = currentProxy + encodeURIComponent(url);
-            
-            // Clone options to avoid mutation
-            const proxyOptions = { ...options };
-            
-            // Remove Content-Type for GET/HEAD requests if proxied
-            if (proxyOptions.method && ['GET', 'HEAD'].includes(proxyOptions.method.toUpperCase())) {
-                delete proxyOptions.headers['Content-Type'];
-            }
-            
-            try {
-                const response = await fetch(proxyUrl, proxyOptions);
-                return response;
-            } catch (error) {
-                log(`❌ فشل البروكسي الحالي: ${currentProxy}`, 'error');
-                
-                // Try to find new proxy
-                const newProxy = await findWorkingProxy();
-                if (newProxy) {
-                    return await proxyFetch(url, options);
-                }
-                
-                throw error;
-            }
-        }
-        
-        // ================= Utilities =================
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-        
-        function getHeaders() {
-            return {
-                "Content-Type": "application/json",
-                "Accept": "*/*"
-            };
-        }
-        
-        // ================= Core Logic =================
-        async function startProcess() {
-            const studentId = document.getElementById('studentId').value;
-            const password = document.getElementById('password').value;
-            
-            if (!studentId || !password) {
-                log("يرجى ملء جميع الحقول", "error");
-                return;
-            }
-            
-            isRunning = true;
-            document.getElementById('loginForm')?.classList.add('hidden');
-            document.getElementById('controlPanel').classList.remove('hidden');
-            document.getElementById('stopBtn').style.display = 'block';
-            document.getElementById('statusText').textContent = 'جاري العمل...';
-            
-            // Initialize proxy if needed
-            const connectionMethod = document.getElementById('connectionMethod').value;
-            if (connectionMethod === 'proxy' && !currentProxy) {
-                log("🔍 البحث عن بروكسي فعال...", "proxy");
-                const proxy = await findWorkingProxy();
-                if (!proxy) {
-                    log("❌ لم يتم العثور على بروكسي فعال. الرجاء تفعيل إضافة CORS.", "error");
-                    stopProcess();
-                    return;
-                }
-            }
-            
-            try {
-                const loggedIn = await login(studentId, password);
-                if (loggedIn) {
-                    log("تم تسجيل الدخول بنجاح!", "success");
-                    await runSolverLoop();
-                } else {
-                    log("فشل تسجيل الدخول. تأكد من البيانات أو جرب استخدام بروكسي.", "error");
-                    stopProcess();
-                }
-            } catch (e) {
-                log(`حدث خطأ غير متوقع: ${e.message}`, "error");
-                stopProcess();
-            }
-        }
-        
-        function stopProcess() {
-            isRunning = false;
-            document.getElementById('loginTab').classList.remove('hidden');
-            document.getElementById('controlPanel').classList.add('hidden');
-            log("تم إيقاف العملية.", "warn");
-        }
-        
-        async function login(studentId, password) {
-            log("جاري محاولة تسجيل الدخول...", "info");
-            try {
-                const url = `${PORTAL_URL}/oauth2/password-login`;
-                const response = await smartFetch(url, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ student_id: studentId, password: password })
-                });
-                
-                if (response.ok) return true;
-                
-                // Try with specific error handling
-                const errorText = await response.text();
-                log(`❌ خطأ في تسجيل الدخول: ${response.status}`, "error");
-                return false;
-            } catch (e) {
-                console.error(e);
-                return false;
-            }
-        }
-        
-        async function runSolverLoop() {
-            while (isRunning) {
-                log("🔍 البحث عن الدرس التالي...", "info");
-                
-                const lectureId = await findActiveLecture(5);
-                
-                if (lectureId === "DONE") {
-                    log("🎉 جميع الدروس في هذا القسم مكتملة!", "success");
-                    stopProcess();
-                    break;
-                }
-                
-                if (!lectureId) {
-                    log("⚠️ لم يتم العثور على دروس أو حدث خطأ. إعادة المحاولة...", "warn");
-                    await sleep(3000);
-                    continue;
-                }
-                
-                log(`📝 بدء حل الدرس: ${lectureId}`, "info");
-                const success = await solveLectureSteps(lectureId);
-                
-                if (success) {
-                    log(`✅ تم إنهاء الدرس ${lectureId} بنجاح!`, "success");
-                    await sleep(2000);
-                } else {
-                    log(`❌ فشل في حل الدرس ${lectureId}`, "error");
-                    await sleep(5000);
-                }
-            }
-        }
-        
-        async function findActiveLecture(sectionId) {
-            try {
-                const chapRes = await smartFetch(`${BASE_URL}/api/study/students/sections/${sectionId}/chapters`);
-                if (!chapRes.ok) return null;
-                const chapters = await chapRes.json();
-                
-                for (const chapter of chapters) {
-                    if (!isRunning) return null;
-                    if (chapter.completed_at) continue;
-                    
-                    const lecRes = await smartFetch(`${BASE_URL}/api/study/students/chapters/${chapter.chapter_id}/lectures`);
-                    if (!lecRes.ok) continue;
-                    const lectures = await lecRes.json();
-                    
-                    for (const lecture of lectures) {
-                        if (!isRunning) return null;
-                        if (lecture.completed_at || lecture.status === 'completed') continue;
-                        return lecture.id || lecture.lecture_id;
-                    }
-                }
-                return "DONE";
-            } catch (e) {
-                console.error(e);
-                return null;
-            }
-        }
-        
-        async function solveLectureSteps(lectureId) {
-            try {
-                const sourceRes = await smartFetch(`${BASE_URL}/api/study/lectures/${lectureId}`);
-                if (!sourceRes.ok) return false;
-                const sourceData = await sourceRes.json();
-                
-                const answersMap = {};
-                const steps = sourceData.talks || sourceData.steps || [];
-                
-                steps.forEach(step => {
-                    const sId = step.id;
-                    const body = step.body || {};
-                    const type = step.type;
-                    
-                    if (type === 'programming' && body.codes && body.codes.length > 0) {
-                        if (body.codes[0].model_answer) {
-                            answersMap[sId] = { type: 'code', val: body.codes[0].model_answer };
-                        }
-                    } else if (type === 'choice' && body.options) {
-                        body.options.forEach((opt, idx) => {
-                            if (opt.is_correct) {
-                                answersMap[sId] = { type: 'choice', val: (idx + 1).toString() };
-                            }
-                        });
-                    }
-                });
-                
-                const studentRes = await smartFetch(`${BASE_URL}/api/study/students/lectures/${lectureId}`);
-                if (!studentRes.ok) return false;
-                const studentData = await studentRes.json();
-                const studentTalks = studentData.talks || studentData.steps || [];
-                
-                for (const talk of studentTalks) {
-                    if (!isRunning) return false;
-                    
-                    const talkId = talk.talk_id || talk.id;
-                    
-                    if (answersMap[talkId]) {
-                        await submitStep(talkId, answersMap[talkId].val, answersMap[talkId].type);
-                        log(`➡️ حل خطوة (ID: ${talkId}) نوع: ${answersMap[talkId].type}`, "info");
-                    } else {
-                        await submitStep(talkId, null, "pass");
-                    }
-                    
-                    await sleep(800);
-                }
-                
-                await smartFetch(`${BASE_URL}/api/study/students/lectures/${lectureId}/complete`, {
-                    method: 'PUT',
-                    headers: getHeaders(),
-                    body: JSON.stringify({})
-                });
-                
-                return true;
-                
-            } catch (e) {
-                console.error(e);
-                return false;
-            }
-        }
-        
-        async function submitStep(talkId, answer, type) {
-            const url = `${BASE_URL}/api/study/students/lecture-talks/${talkId}`;
-            let payload = {};
-            
-            if (type === "code") {
-                payload = {
-                    "value": {"try_demo": {"lang": "javascript", "answer": answer}},
-                    "status": "completed"
-                };
-            } else if (type === "choice") {
-                payload = {
-                    "value": {"choice_question": {"value": answer}},
-                    "status": "completed"
-                };
-            } else {
-                payload = {
-                    "value": {},
-                    "status": "completed"
-                };
-            }
-            
-            try {
-                await smartFetch(url, {
-                    method: 'PUT',
-                    headers: getHeaders(),
-                    body: JSON.stringify(payload)
-                });
-            } catch (e) {
-                log(`⚠️ خطأ في إرسال الخطوة: ${e.message}`, 'warn');
-            }
-        }
-        
-        // Initialize on load
-        window.addEventListener('load', async () => {
-            log("🚀 النظام جاهز للاستخدام", "success");
-            log("📌 حدد طريقة الاتصال من القائمة المنسدلة", "info");
-            
-            // Auto-test proxies in background
-            setTimeout(async () => {
-                if (!currentProxy) {
-                    await findWorkingProxy();
-                }
-            }, 1000);
-        });
+
+        // ================= Initialize =================
+        window.addEventListener('load', init);
         
     </script>
 </body>
-    </html>
+</html>
